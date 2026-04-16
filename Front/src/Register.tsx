@@ -1,7 +1,6 @@
-import React, { useEffect,useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Register.module.css";
-import { preconnect } from "react-dom";
 
 function Registracija(){
     const navigate = useNavigate();
@@ -35,11 +34,12 @@ function Registracija(){
     }
     async function PatikrintiAtsakyma(){
         const response = await fetch("api/user/create",{
+            method:"POST",
             headers : {
-                method:"POST",
-                "content-type":"application/json",
-                body: JSON.stringify(vartotojas)
-            }});
+                "content-type":"application/json"
+            },
+            body: JSON.stringify(vartotojas)
+        });
         if(!response.ok){
             setZinute("Klaida");
             return;
@@ -48,7 +48,7 @@ function Registracija(){
     }
     return (
         <>
-        <div>
+        <div className={styles.style}>
             <p>{zinute}</p>
             <form onSubmit={PatikrintiAtsakyma}>
                 <input id = "slapyvardis" type = "text" placeholder="Slapyvardis" onChange={handleChange} value={vartotojas.slapyvardis}/>
@@ -59,6 +59,7 @@ function Registracija(){
 
                 <input id ="pastas" type = "text" placeholder = "El.Pastas" onChange= {handleChange} value = {vartotojas.pastas}/>
                 
+                <button id = "submit" type="submit">Išsaugoti</button>
                 
             </form>
         </div>
