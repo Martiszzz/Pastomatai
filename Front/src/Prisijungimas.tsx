@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "./Register.module.css";
 import "./global.css";
 
@@ -78,6 +78,7 @@ function PrisijungimoLangas() {
                         Prisijungti
                     </button>
                 </form>
+                <Link to="/register">Registruotis</Link>
             </div>
         </>
     );

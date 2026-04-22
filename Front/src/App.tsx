@@ -9,7 +9,7 @@ function App() {
         <BrowserRouter>
             <Routes>
                 <Route path = "/main" element ={<Testas />} />
-                <Route path = "" element={<RegistracijosLangas/>} />
+                <Route path = "" element={<PrisijungimoLangas/>} />
                 <Route path = "/register" element ={<RegistracijosLangas />} />
                 
                 <Route path = "/login" element ={<PrisijungimoLangas />} />

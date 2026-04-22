@@ -7,8 +7,10 @@ function Testas(){
         <>
         <div className={styles.title}>
             <h1>KTUMATAS</h1>
-            <Link to ="/login">loginas</Link>
-            <Link to ="/sekti">sekti</Link>
+            <Link to ="/login">Prisijungimas</Link>
+            
+            <Link to ="/register">Registracija</Link>
+            <Link to ="/sekti">Siuntos sekimas</Link>
         </div>
         </>
     )
