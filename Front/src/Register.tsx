@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./Register.module.css";
+import "./global.css";
 
-function Registracija(){
+function RegistracijosLangas(){
     const navigate = useNavigate();
     interface user{
         slapyvardis : string,
@@ -32,7 +33,9 @@ function Registracija(){
         }));
         
     }
-    async function PatikrintiAtsakyma(){
+    async function PriduotiDuomenis(c:React.SubmitEvent<HTMLFormElement>){
+        c.preventDefault();
+        if(!PatikrintiUzpildyma()) { setZinute("Reikia supildyti visus laukus");return;}
         const response = await fetch("api/user/create",{
             method:"POST",
             headers : {
@@ -46,14 +49,21 @@ function Registracija(){
         }
         navigate('/main');
     }
+    function PatikrintiUzpildyma(){
+        if(vartotojas.pastas==""||vartotojas.pavarde==""||vartotojas.slaptazodis==""||vartotojas.slapyvardis==""||vartotojas.vardas==""){
+            return false;
+        }
+        else return true;
+    }
     return (
         <>
         <div className={styles.style}>
+            <h1>Registracija</h1>
             <p>{zinute}</p>
-            <form onSubmit={PatikrintiAtsakyma}>
+            <form onSubmit={PriduotiDuomenis}>
                 <input id = "slapyvardis" type = "text" placeholder="Slapyvardis" onChange={handleChange} value={vartotojas.slapyvardis}/>
                 
-                <input id = "slaptazodis" type = "text" placeholder="Slaptazodis" onChange={handleChange} value={vartotojas.slaptazodis}/>
+                <input id = "slaptazodis" type = "password" placeholder="Slaptazodis" onChange={handleChange} value={vartotojas.slaptazodis}/>
                 <input id = "vardas" type = "text" placeholder="Vardas" onChange={handleChange} value={vartotojas.vardas}/>
                 <input id = "pavarde" type = "text" placeholder="Pavarde" onChange={handleChange} value={vartotojas.pavarde}/>
 
@@ -66,4 +76,4 @@ function Registracija(){
         </>
     )
 }
-export default Registracija
+export default RegistracijosLangas
