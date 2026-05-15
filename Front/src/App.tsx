@@ -3,6 +3,9 @@ import Testas from "./index.tsx"
 import RegistracijosLangas from "./Register.tsx";
 import PrisijungimoLangas from "./Prisijungimas.tsx";
 import SiuntuSekimoLangas from "./SektiSiunta.tsx";
+import PastomatuLangas from "./PastomatuLangas";
+import IsemimoKodoLangas from "./IsemimoKodoLangas";
+import IsemimoPatvirtinimoLangas from "./IsemimoPatvirtinimoLangas";
 
 function App() {
     return (
@@ -14,6 +17,9 @@ function App() {
                 
                 <Route path = "/login" element ={<PrisijungimoLangas />} />
                 <Route path = "/sekti" element ={<SiuntuSekimoLangas />} />
+                <Route path="/pastomatas" element={<PastomatuLangas />} />
+                <Route path="/pastomatas/isemimo-kodas" element={<IsemimoKodoLangas />} />
+                <Route path="/pastomatas/isemimo-patvirtinimas/:siuntaId" element={<IsemimoPatvirtinimoLangas />} />
             </Routes>
         </BrowserRouter>
     );

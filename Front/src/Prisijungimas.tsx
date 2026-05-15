@@ -31,7 +31,7 @@ function PrisijungimoLangas() {
 
     async function PatikrintiDuomenysPilni(c: React.FormEvent<HTMLFormElement>) {
         c.preventDefault();
-        if(vartotojas.slaptazodis==""||vartotojas.slapyvardis==""){
+        if (vartotojas.slaptazodis == "" || vartotojas.slapyvardis == "") {
             setZinute("Supildyti visus laukus");
         }
 
@@ -48,7 +48,13 @@ function PrisijungimoLangas() {
             return;
         }
 
-        navigate("/main");
+        const data = await response.json();
+
+        if (data?.user?.role === "pastomatas") {
+            navigate("/pastomatas");
+        } else {
+            navigate("/main");
+        }
     }
 
     return (
