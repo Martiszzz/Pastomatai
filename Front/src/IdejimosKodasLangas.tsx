@@ -69,6 +69,7 @@ function IdejimosKodasLangas() {
                     type="submit"
                     className={styles.mygtukas}
                     >
+                        Tikrinti
                 </button>
                 <button
                     type="button"
