@@ -238,7 +238,7 @@ module.exports = (app) => {
             console.log(
                 `[Siunta ${siunta.siuntosNr}] Priskirtos durelės ID=${dureles.dureliuId}`
             );
-
+            if(siunta.busena==="uzregistruota") console.log("SIGNALAS PAŠTOMATUI SPAUSDINTI KODA");
             await connection.commit();
 
             return res.status(200).json({
