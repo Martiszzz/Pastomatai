@@ -6,6 +6,8 @@ import SiuntuSekimoLangas from "./SektiSiunta.tsx";
 import PastomatuLangas from "./PastomatuLangas";
 import IsemimoKodoLangas from "./IsemimoKodoLangas";
 import IsemimoPatvirtinimoLangas from "./IsemimoPatvirtinimoLangas";
+import IdejimosKodasLangas from "./IdejimosKodasLangas.tsx";
+import IdejimosPatvirtinimasLangas from "./IdejimosPatvirtinimasLangas.tsx";
 
 function App() {
     return (
@@ -17,6 +19,9 @@ function App() {
                 
                 <Route path = "/login" element ={<PrisijungimoLangas />} />
                 <Route path = "/sekti" element ={<SiuntuSekimoLangas />} />
+                <Route path = "/pastomatas/idejimo-kodas" element = {<IdejimosKodasLangas/>}/>
+                
+                <Route path = "/pastomatas/idejimo-patvirtinimas/:siuntosNr" element = {<IdejimosPatvirtinimasLangas/>}/>
                 <Route path="/pastomatas" element={<PastomatuLangas />} />
                 <Route path="/pastomatas/isemimo-kodas" element={<IsemimoKodoLangas />} />
                 <Route path="/pastomatas/isemimo-patvirtinimas/:siuntaId" element={<IsemimoPatvirtinimoLangas />} />
