@@ -464,4 +464,100 @@ module.exports = (app) => {
         }
     });
 
+    // Siuntos apmokėjimo metodas
+    app.post("/api/siuntos-apmokejimas", async (req, res) => {
+        const connection = await pool.getConnection();
+
+        try {
+            const { uzsakymoId } = req.body;
+
+            if (!uzsakymoId) {
+                return res.status(400).json({
+                    error: "Trūksta užsakymo ID"
+                });
+            }
+
+            await connection.beginTransaction();
+
+            // Tikrinti užsakymą
+            const [uzsakymai] = await connection.query(
+                `SELECT uzsakymoId, kaina, busena FROM uzsakymas WHERE uzsakymoId = ?`,
+                [uzsakymoId]
+            );
+
+            if (uzsakymai.length === 0) {
+                await connection.rollback();
+                return res.status(404).json({
+                    error: "Užsakymas nerastas"
+                });
+            }
+
+            const uzsakymas = uzsakymai[0];
+
+            // Pasiųsti signalą bankininkystės sistemai
+            console.log(`[Apmokėjimas] Siunčiamas signalas bankininkystės sistemai - Užsakymas: ${uzsakymoId}, Suma: ${uzsakymas.kaina}`);
+
+            // Atnaujinti užsakymo būseną į "apmoketa"
+            await connection.query(
+                `UPDATE uzsakymas SET busena = ? WHERE uzsakymoId = ?`,
+                ["apmoketa", uzsakymoId]
+            );
+
+            console.log(`[Apmokėjimas] Užsakymas ${uzsakymoId} pažymėtas apmokėtu`);
+
+            await connection.commit();
+
+            return res.status(200).json({
+                sekminga: true,
+                uzsakymoId: uzsakymoId
+            });
+
+        } catch (error) {
+            await connection.rollback();
+            console.error("[siuntos-apmokejimas] klaida:", error);
+            return res.status(500).json({
+                sekminga: false,
+                error: "Serverio klaida"
+            });
+        } finally {
+            connection.release();
+        }
+    });
+
+    // Siuntos peržiūros langas - grąžinti siuntas pagal vartotojo ID
+    app.get("/api/siuntos-vartotojo/:vartotojoId", async (req, res) => {
+        try {
+            const { vartotojoId } = req.params;
+
+            if (!vartotojoId) {
+                return res.status(400).json({
+                    error: "Trūksta vartotojo ID"
+                });
+            }
+
+            console.log(`[Siuntos peržiūra] Gautos siuntos vartotojui: ${vartotojoId}`);
+
+            const [siuntos] = await pool.query(
+                `SELECT s.siuntosNr, s.busena, s.lipdukoNr, s.kodas, u.uzsakymoId, 
+                        u.kaina, u.busena as uzsakymo_busena, u.svoris, u.gavejo_vardas, 
+                        u.gavejo_pavarde, u.gavejo_adresas, u.uzsakymo_laikas
+                 FROM siunta s
+                 JOIN uzsakymas u ON s.uzsakymo_id = u.uzsakymoId
+                 WHERE u.vartotojo_id = ?
+                 ORDER BY u.uzsakymo_laikas DESC`,
+                [parseInt(vartotojoId)]
+            );
+
+            console.log(`[Siuntos peržiūra] Rasta siuntų: ${siuntos.length}`);
+
+            res.status(200).json(siuntos);
+
+        } catch (error) {
+            console.error("[siuntos-vartotojo] klaida:", error);
+            res.status(500).json({
+                error: "Serverio klaida"
+            });
+        }
+    });
+
 };

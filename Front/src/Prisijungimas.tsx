@@ -49,7 +49,11 @@ function PrisijungimoLangas() {
         }
 
         const data = await response.json();
-
+        //Nesaugojo id, tai siuntos nebuvo randamos
+        if (data?.user?.id) {
+            localStorage.setItem("vartotojoId", data.user.id);
+        }
+        //Dabar saugo
         if (data?.user?.role === "pastomatas") {
             navigate("/pastomatas");
         } else {

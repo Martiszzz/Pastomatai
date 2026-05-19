@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 22, 2026 at 06:21 PM
+-- Generation Time: May 19, 2026 at 06:57 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -86,7 +86,12 @@ CREATE TABLE `patvirtinimas` (
 
 INSERT INTO `patvirtinimas` (`patvirtinimoId`, `patvirtintasIdejimas`, `patvirtintasIsiemimas`, `siunta_id`) VALUES
 (3, 1, 0, 18),
-(4, 1, 1, 19);
+(4, 1, 1, 19),
+(5, 1, 0, 23),
+(6, 0, 0, 24),
+(7, 1, 0, 25),
+(8, 1, 0, 26),
+(9, 0, 0, 27);
 
 -- --------------------------------------------------------
 
@@ -96,7 +101,7 @@ INSERT INTO `patvirtinimas` (`patvirtinimoId`, `patvirtintasIdejimas`, `patvirti
 
 CREATE TABLE `siunta` (
   `siuntosNr` int(11) NOT NULL,
-  `busena` enum('uzregistruota','issiusta','vietoje','atsaukta') DEFAULT NULL,
+  `busena` enum('uzregistruota','issiusta','vietoje','atsaukta','pristatyta','nepatvirtinta') DEFAULT NULL,
   `lipdukoNr` int(11) DEFAULT NULL,
   `kodas` int(11) DEFAULT NULL,
   `pastomato_id` int(11) NOT NULL,
@@ -110,7 +115,15 @@ CREATE TABLE `siunta` (
 
 INSERT INTO `siunta` (`siuntosNr`, `busena`, `lipdukoNr`, `kodas`, `pastomato_id`, `uzsakymo_id`, `dureliu_id`) VALUES
 (18, 'uzregistruota', 1111, 5555, 1, 1, 5),
-(19, 'issiusta', 2222, 6666, 1, 2, 6);
+(19, 'issiusta', 2222, 6666, 1, 2, 6),
+(20, 'uzregistruota', 3333, 7777, 1, 3, 5),
+(21, 'issiusta', 4444, 8888, 1, 4, 6),
+(22, 'vietoje', 5555, 9999, 2, 5, 7),
+(23, 'uzregistruota', 6666, 1111, 1, 6, 5),
+(24, 'issiusta', 7777, 2222, 2, 7, 8),
+(25, 'uzregistruota', 8888, 3333, 1, 8, 6),
+(26, 'uzregistruota', 9101, 4444, 1, 9, 5),
+(27, 'issiusta', 9202, 5555, 2, 10, 7);
 
 -- --------------------------------------------------------
 
@@ -139,7 +152,15 @@ CREATE TABLE `uzsakymas` (
 
 INSERT INTO `uzsakymas` (`uzsakymoId`, `kaina`, `busena`, `svoris`, `siuntejo_tel_nr`, `gavejo_vardas`, `gavejo_pavarde`, `gavejo_tel_nr`, `gavejo_adresas`, `uzsakymo_laikas`, `gavejo_el_pastas`, `vartotojo_id`) VALUES
 (1, 5.99, 'apmoketa', 1.2, '+37060000001', 'Jonas', 'Jonaitis', '+37060000011', 'Kaunas', '2026-04-21', 'jonas@mail.com', 2),
-(2, 8.5, 'neapmoketa', 2.5, '+37060000002', 'Ona', 'Onute', '+37060000022', 'Vilnius', '2026-04-21', 'ona@mail.com', 3);
+(2, 8.5, 'neapmoketa', 2.5, '+37060000002', 'Ona', 'Onute', '+37060000022', 'Vilnius', '2026-04-21', 'ona@mail.com', 3),
+(3, 6.99, 'apmoketa', 1.5, '+37060000111', 'Petras', 'Petraitis', '+37060000999', 'Kaunas', '2026-05-19', 'petras@mail.com', 8),
+(4, 4.5, 'apmoketa', 0.8, '+37060000222', 'Rasa', 'Rasaite', '+37060000888', 'Vilnius', '2026-05-19', 'rasa@mail.com', 8),
+(5, 9.99, 'neapmoketa', 3.2, '+37060000333', 'Tomas', 'Tomaitis', '+37060000777', 'Klaipeda', '2026-05-19', 'tomas@mail.com', 8),
+(6, 7.49, 'apmoketa', 1.8, '+37060000444', 'Laura', 'Lauraityte', '+37060000666', 'Kaunas', '2026-05-19', 'laura@mail.com', 8),
+(7, 3.99, 'apmoketa', 0.5, '+37060000555', 'Marius', 'Mariunas', '+37060000555', 'Vilnius', '2026-05-19', 'marius@mail.com', 8),
+(8, 11, 'neapmoketa', 4, '+37060000666', 'Egle', 'Eglyte', '+37060000444', 'Klaipeda', '2026-05-19', 'egle@mail.com', 8),
+(9, 6.5, 'apmoketa', 1.1, '+37060000701', 'Jonas', 'Jonaitis', '+37060000101', 'Kaunas', '2026-05-19', 'jonas@mail.com', 1),
+(10, 4.99, 'neapmoketa', 2, '+37060000702', 'Ona', 'Onute', '+37060000102', 'Vilnius', '2026-05-19', 'ona@mail.com', 1);
 
 -- --------------------------------------------------------
 
@@ -154,7 +175,7 @@ CREATE TABLE `vartotojas` (
   `vardas` varchar(100) DEFAULT NULL,
   `pavarde` varchar(100) DEFAULT NULL,
   `el_pastas` varchar(150) DEFAULT NULL,
-  `role` enum('administratorius','kurjeris','vartotojas') NOT NULL
+  `role` enum('administratorius','kurjeris','vartotojas','pastomatas') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -167,7 +188,9 @@ INSERT INTO `vartotojas` (`vartotojoId`, `prisijungimo_vardas`, `slaptazodis`, `
 (3, 'user1', 'hashed_pw', 'Jonas', 'Jonaitis', 'jonas@mail.com', 'vartotojas'),
 (4, 'user2', 'hashed_pw', 'Ona', 'Onute', 'ona@mail.com', 'vartotojas'),
 (5, 'admin@ktu.lt', '$2b$10$paa8bmbLsM5GfjR2C/efJuFl6xIr6nGCg.teFL7LwmXDEF9VezEyu', 'Mantas', 'Titas', 'adminas@ktu.lt', 'vartotojas'),
-(6, 'nauajsUser', '$2b$10$QB9uTA42rkU4vDgbBLt7dOYHivv.CH29LlvlZnnlg71iXbHPoFuyi', 'vardenis', 'pavardensis', 'pastas@gmai.com', 'vartotojas');
+(6, 'nauajsUser', '$2b$10$QB9uTA42rkU4vDgbBLt7dOYHivv.CH29LlvlZnnlg71iXbHPoFuyi', 'vardenis', 'pavardensis', 'pastas@gmai.com', 'vartotojas'),
+(7, 'test', '$2b$10$FccN/HE3RyfI/vU2m4/Y8eKo3AQpWFCtbgynWB2nsKy/ZHwfothSq', 'test', 'test', 'test@gmail.com', 'pastomatas'),
+(8, 'test123', '$2b$10$WZXksGSU1ed05s6mhTbjo.CoZ/1xNc40tBxSeTBxwxK5bCe2JA2IG', 'Testas', 'Testenis', 'testas@gmail.com', 'vartotojas');
 
 --
 -- Indexes for dumped tables
@@ -235,25 +258,25 @@ ALTER TABLE `pastomatas`
 -- AUTO_INCREMENT for table `patvirtinimas`
 --
 ALTER TABLE `patvirtinimas`
-  MODIFY `patvirtinimoId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `patvirtinimoId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `siunta`
 --
 ALTER TABLE `siunta`
-  MODIFY `siuntosNr` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `siuntosNr` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `uzsakymas`
 --
 ALTER TABLE `uzsakymas`
-  MODIFY `uzsakymoId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `uzsakymoId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `vartotojas`
 --
 ALTER TABLE `vartotojas`
-  MODIFY `vartotojoId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `vartotojoId` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Constraints for dumped tables

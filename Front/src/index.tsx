@@ -11,6 +11,7 @@ function Testas(){
             
             <Link to ="/register">Registracija</Link>
             <Link to ="/sekti">Siuntos sekimas</Link>
+            <Link to ="/siuntos">Siuntos peržiūra</Link>
         </div>
         </>
     )
