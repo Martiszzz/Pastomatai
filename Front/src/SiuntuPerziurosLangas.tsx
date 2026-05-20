@@ -65,12 +65,15 @@ export default function SiuntuPerzurosLangas() {
         siunta.gavejo_vardas.toLowerCase().includes(filtras.toLowerCase()) ||
         siunta.siuntosNr.toString().includes(filtras)
     );
-    //KAI BUS REGISTRACIJA - REMOVE
+
+    //REGISTRACIJA
     const handleRegistruotiUzsakyma = () => {
-        // Neveikiantis mygtukas
-        alert("Šis funkcionalumas dar nėra aktyvus");
+    navigate("/uzsakymas/registracija");
     };
     //
+
+
+
     if (loading) return <div className={styles.container}><p>Kraunama...</p></div>;
 
     return (

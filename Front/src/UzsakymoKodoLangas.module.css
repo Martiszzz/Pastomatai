@@ -1,0 +1,50 @@
+.container {
+    padding: 30px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.kortele {
+    background-color: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.info p {
+    text-align: left;
+    margin-bottom: 10px;
+}
+
+.mygtukai {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.klaida {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.sekme {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.atgalMygtukas {
+    background-color: #6c757d;
+}
+
+@media (max-width: 600px) {
+    .mygtukai {
+        grid-template-columns: 1fr;
+    }
+}
