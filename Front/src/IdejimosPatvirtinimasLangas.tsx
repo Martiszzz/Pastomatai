@@ -14,9 +14,6 @@ const PATVIRTINIMO_LAIKAS_SEK = 3 * 60;
 
 function IdejimosPatvirtinimasLangas() {
     const [likesLaikas, setLikesLaikas] = useState<number>(PATVIRTINIMO_LAIKAS_SEK);
-    // const [zinute, setZinute] = useState<string>("");
-    // const [busena, setBusena] = useState<"laukiama" | "vykdoma" | "baigta">("laukiama");
-    // const vykdomaRef = useRef(false); 
     const [searchParams] = useSearchParams();
     const { siuntosNr } = useParams();
     const navigate = useNavigate();
