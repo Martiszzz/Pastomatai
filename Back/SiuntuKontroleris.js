@@ -464,6 +464,228 @@ module.exports = (app) => {
         }
     });
 
+
+
+
+        // UzsakymoRegistracijosLangasKontrolieris -> SiuntuKontrolieris
+    app.get("/api/pastomatai", async (req, res) => {
+        try {
+            const [pastomatai] = await pool.query(
+                `SELECT idNr, adresas
+                 FROM pastomatas
+                 ORDER BY adresas ASC`
+            );
+
+            return res.status(200).json(pastomatai);
+
+        } catch (error) {
+            console.error("[pastomatai] klaida:", error);
+            return res.status(500).json({
+                error: "Serverio klaida"
+            });
+        }
+    });
+
+    // UzsakymoRegistracijosLangasKontrolieris -> SiuntuKontrolieris
+    app.post("/api/uzsakymas/registruoti", async (req, res) => {
+        const connection = await pool.getConnection();
+
+        try {
+            const {
+                siuntejo_tel_nr,
+                gavejo_vardas,
+                gavejo_pavarde,
+                gavejo_tel_nr,
+                gavejo_el_pastas,
+                svoris,
+                pastomato_id,
+                vartotojo_id
+            } = req.body;
+
+            if (!siuntejo_tel_nr ||
+                !gavejo_vardas ||
+                !gavejo_pavarde ||
+                !gavejo_tel_nr ||
+                !gavejo_el_pastas ||
+                !svoris ||
+                !pastomato_id ||
+                !vartotojo_id) {
+                return res.status(400).json({
+                    error: "Trūksta užsakymo duomenų"
+                });
+            }
+
+            if (!PatikrintiEmail(gavejo_el_pastas)) {
+                return res.status(400).json({
+                    error: "Neteisingas gavėjo el. pašto formatas"
+                });
+            }
+
+            if (Number(svoris) <= 0) {
+                return res.status(400).json({
+                    error: "Svoris turi būti didesnis už 0"
+                });
+            }
+
+            await connection.beginTransaction();
+
+            const [pastomatai] = await connection.query(
+                `SELECT idNr, adresas
+                 FROM pastomatas
+                 WHERE idNr = ?`,
+                [pastomato_id]
+            );
+
+            if (pastomatai.length === 0) {
+                await connection.rollback();
+                return res.status(404).json({
+                    error: "Pasirinktas paštomatas nerastas"
+                });
+            }
+
+            const gavejo_adresas = pastomatai[0].adresas;
+            const kaina = ApskaiciuotiKaina(Number(svoris));
+
+            const [uzsakymoRezultatas] = await connection.query(
+                `INSERT INTO uzsakymas
+                (kaina,
+                busena,
+                svoris,
+                siuntejo_tel_nr,
+                gavejo_vardas,
+                gavejo_pavarde,
+                gavejo_tel_nr,
+                gavejo_adresas,
+                uzsakymo_laikas,
+                gavejo_el_pastas,
+                vartotojo_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), ?, ?)`,
+                [
+                    kaina,
+                    "neapmoketa",
+                    Number(svoris),
+                    siuntejo_tel_nr,
+                    gavejo_vardas,
+                    gavejo_pavarde,
+                    gavejo_tel_nr,
+                    gavejo_adresas,
+                    gavejo_el_pastas,
+                    vartotojo_id
+                ]
+            );
+
+            const uzsakymoId = uzsakymoRezultatas.insertId;
+            const kodas = await GeneruotiUnikaluKoda(connection, "kodas");
+            const lipdukoNr = await GeneruotiUnikaluKoda(connection, "lipdukoNr");
+
+            const [siuntosRezultatas] = await connection.query(
+                `INSERT INTO siunta
+                (busena,
+                lipdukoNr,
+                kodas,
+                pastomato_id,
+                uzsakymo_id)
+                VALUES (?, ?, ?, ?, ?)`,
+                [
+                    "uzregistruota",
+                    lipdukoNr,
+                    kodas,
+                    pastomato_id,
+                    uzsakymoId
+                ]
+            );
+
+            await connection.commit();
+
+            return res.status(201).json({
+                sekminga: true,
+                uzsakymoId: uzsakymoId,
+                siuntosNr: siuntosRezultatas.insertId,
+                kodas: kodas,
+                lipdukoNr: lipdukoNr,
+                kaina: kaina
+            });
+
+        } catch (error) {
+            await connection.rollback();
+            console.error("[uzsakymas/registruoti] klaida:", error);
+            return res.status(500).json({
+                sekminga: false,
+                error: "Serverio klaida"
+            });
+        } finally {
+            connection.release();
+        }
+    });
+
+    // UzsakymoKodoLangasKontrolieris -> SiuntuKontrolieris
+    app.get("/api/uzsakymas/:uzsakymoId", async (req, res) => {
+        try {
+            const { uzsakymoId } = req.params;
+
+            const [uzsakymai] = await pool.query(
+                `SELECT u.uzsakymoId,
+                        u.kaina,
+                        u.busena AS uzsakymo_busena,
+                        u.svoris,
+                        u.gavejo_vardas,
+                        u.gavejo_pavarde,
+                        u.gavejo_adresas,
+                        s.siuntosNr,
+                        s.busena AS siuntos_busena,
+                        s.lipdukoNr,
+                        s.kodas
+                 FROM uzsakymas u
+                 JOIN siunta s ON s.uzsakymo_id = u.uzsakymoId
+                 WHERE u.uzsakymoId = ?`,
+                [uzsakymoId]
+            );
+
+            if (uzsakymai.length === 0) {
+                return res.status(404).json({
+                    error: "Užsakymas nerastas"
+                });
+            }
+
+            return res.status(200).json(uzsakymai[0]);
+
+        } catch (error) {
+            console.error("[uzsakymas/:uzsakymoId] klaida:", error);
+            return res.status(500).json({
+                error: "Serverio klaida"
+            });
+        }
+    });
+
+    function ApskaiciuotiKaina(svoris) {
+        return Number((svoris * 0.47).toFixed(2));
+    }
+
+    function PatikrintiEmail(pastas) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(pastas);
+    }
+
+    async function GeneruotiUnikaluKoda(connection, stulpelis) {
+        let kodas;
+        let rasta = true;
+
+        while (rasta) {
+            kodas = Math.floor(100000 + Math.random() * 900000);
+
+            const [eilutes] = await connection.query(
+                `SELECT siuntosNr
+                 FROM siunta
+                 WHERE ${stulpelis} = ?
+                 LIMIT 1`,
+                [kodas]
+            );
+
+            rasta = eilutes.length > 0;
+        }
+
+        return kodas;
+    }
+
     // Siuntos apmokėjimo metodas
     app.post("/api/siuntos-apmokejimas", async (req, res) => {
         const connection = await pool.getConnection();
