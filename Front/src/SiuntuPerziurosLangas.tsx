@@ -17,49 +17,30 @@ interface Siunta {
     uzsakymo_laikas: string;
 }
 
-export default function SiuntuPerzurosLangas() {
+export default function SiuntuPerziurosLangas() {
     const [siuntos, setSiuntos] = useState<Siunta[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [filtras, setFiltras] = useState<string>("");
     const navigate = useNavigate();
-
+    //Gauti siuntu sarasa
     useEffect(() => {
         const vartotojoId = localStorage.getItem("vartotojoId");
         
-        console.log("Vartotojo ID:", vartotojoId);
-        
-        if (!vartotojoId) {
-            navigate("/login");
-            return;
-        }
+        //console.log("Vartotojo ID:", vartotojoId);
 
-        const gausiSiuntas = async () => {
-            try {
-                const response = await fetch(`/api/siuntos-vartotojo/${vartotojoId}`);
-                
-                console.log("API response status:", response.status);
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || "Nepavyko gauti siuntų");
-                }
-                
-                const data = await response.json();
-                console.log("Gautos siuntos:", data);
-                setSiuntos(data);
-                setError(null);
-            } catch (err) {
-                console.error("Klaida:", err);
-                setError(err instanceof Error ? err.message : "Nežinoma klaida");
-            } finally {
-                setLoading(false);
-            }
+        const gautiSiuntas = () => {
+            fetch(`/api/siuntos-vartotojo/${vartotojoId}`)
+            .then(response => response.json())
+            .then(data => {
+            setSiuntos(data);
+            setLoading(false);
+            });
         };
 
-        gausiSiuntas();
-    }, [navigate]);
+        gautiSiuntas();
 
+    }, []);
+    //paieska
     const filtruotosSiuntos = siuntos.filter(siunta =>
         siunta.busena.toLowerCase().includes(filtras.toLowerCase()) ||
         siunta.gavejo_vardas.toLowerCase().includes(filtras.toLowerCase()) ||
@@ -97,7 +78,6 @@ export default function SiuntuPerzurosLangas() {
                 </button>
             </div>
 
-            {error && <div className={styles.error}>{error}</div>}
 
             {filtruotosSiuntos.length === 0 ? (
                 <p className={styles.noData}>Nėra siuntų</p>
