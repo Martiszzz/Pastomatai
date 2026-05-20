@@ -28,7 +28,6 @@ function IdejimosPatvirtinimasLangas() {
         kodas:Number(searchParams.get("kodas"))
     });
     useEffect(() => {
-        // if (busena !== "laukiama") return;
 
         const intervalas = setInterval(() => {
             setLikesLaikas((prev) => {
@@ -45,14 +44,10 @@ function IdejimosPatvirtinimasLangas() {
         }, 1000);
 
         return () => clearInterval(intervalas);
-    }, /*[busena]*/[]);
+    }, []);
 
     const VykdytiPatvirtinima = async (patvirtinimas: number) => {
-        // if (vykdomaRef.current) return;
-
-        // vykdomaRef.current = true;
-        // setBusena("vykdoma");
-
+       
         try {
             const response = await fetch("/api/idejimasPatvirtinti", {
                 method: "POST",
@@ -65,28 +60,16 @@ function IdejimosPatvirtinimasLangas() {
                     patvirtinimas: patvirtinimas,
                 }),
             });
-
-            // const data = await response.json();
-
-            // if (data.sekminga) {
-            //     setZinute("Siunta sėkmingai įdėta į paštomatą!");
-            // } else {
-            //     setZinute("Klaida patvirtinant siuntą.");
-            // }
-        } catch {
-            // setZinute("Serverio klaida.");
-        } finally {
-            // setBusena("baigta");
+        } 
+        finally {
             navigate("/pastomatas");
             setTimeout(() => 3000);
         }
     };
 
     const handlePatvirtinti = () => {
-        // if (busena === "laukiama") {
-
-            VykdytiPatvirtinima(1);
-        // }
+        VykdytiPatvirtinima(1);
+        
     };
     const minutės = Math.floor(likesLaikas / 60);
     const sekundės = likesLaikas % 60;
@@ -95,10 +78,7 @@ function IdejimosPatvirtinimasLangas() {
         <div className={styles.container}>
             <h1 className={styles.title}>Patvirtinimas</h1>
 
-            {/* {busena === "baigta" ? (
-                <p className={styles.zinute}>{zinute}</p>
-            ) : ( */}
-                <>
+              <>
                     <div className={styles.infoBlokasLentele}>
                         <p>
                             <span className={styles.etiketė}>Siuntos Nr.:</span>
@@ -118,7 +98,7 @@ function IdejimosPatvirtinimasLangas() {
                         Įdėkite siuntą ir paspauskite <strong>Patvirtinti</strong>.
                     </p>
 
-                    {/* {busena === "laukiama" && ( */}
+                   
                         <>
                             <p className={styles.laikmatis}>
                                 Automatinis patvirtinimas po:{" "}
@@ -133,10 +113,8 @@ function IdejimosPatvirtinimasLangas() {
                                 Patvirtinti
                             </button>
                         </>
-                    {/* )} */}
-
+                    
                 </>
-            {/* )} */}
         </div>
     );
 }
