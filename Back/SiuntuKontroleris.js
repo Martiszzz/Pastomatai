@@ -209,6 +209,16 @@ module.exports = (app) => {
                 [siunta.pastomato_id]
             );
 
+            // if (laisvosDureles.length === 0) {
+
+            //     await connection.rollback();
+
+            //     return res.status(200).json({
+            //         teigiamas: false,
+            //         klaida: "Nerasta laisvų durelių",
+            //     });
+            // }
+
             const dureles = laisvosDureles[0];
 
             await connection.query(
@@ -240,6 +250,24 @@ module.exports = (app) => {
                 lipdukoNr: siunta.lipdukoNr,
             });
 
+        } catch (error) {
+
+            await connection.rollback();
+
+            console.error(
+                "[idejimasPatikrinti] klaida:",
+                error
+            );
+
+            return res.status(500).json({
+                teigiamas: false,
+                klaida: "Serverio klaida",
+            });
+
+        } finally {
+
+            connection.release();
+        }
     });
 
 
