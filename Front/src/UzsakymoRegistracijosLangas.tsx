@@ -8,7 +8,7 @@ interface Pastomatas {
     adresas: string;
 }
 
-interface Uzsakymas {
+interface UzsakymoForma {
     siuntejo_tel_nr: string;
     gavejo_vardas: string;
     gavejo_pavarde: string;
@@ -18,20 +18,15 @@ interface Uzsakymas {
     pastomato_id: string;
 }
 
-interface SukurtasUzsakymas {
-    uzsakymoId: number;
-    kaina: number;
-}
-
 function UzsakymoRegistracijosLangas() {
     const navigate = useNavigate();
 
     const [pastomatai, setPastomatai] = useState<Pastomatas[]>([]);
     const [zinute, setZinute] = useState<string>("");
     const [sekme, setSekme] = useState<string>("");
-    const [sukurtasUzsakymas, setSukurtasUzsakymas] = useState<SukurtasUzsakymas | null>(null);
+    const [sukurtasUzsakymoId, setSukurtasUzsakymoId] = useState<number | null>(null);
 
-    const [uzsakymas, setUzsakymas] = useState<Uzsakymas>({
+    const [uzsakymas, setUzsakymas] = useState<UzsakymoForma>({
         siuntejo_tel_nr: "",
         gavejo_vardas: "",
         gavejo_pavarde: "",
@@ -42,105 +37,77 @@ function UzsakymoRegistracijosLangas() {
     });
 
     useEffect(() => {
-        const vartotojoId = localStorage.getItem("vartotojoId");
-
-        if (!vartotojoId) {
-            navigate("/login");
-            return;
-        }
-
         GautiPastomatus();
-    }, [navigate]);
+    }, []);
 
     async function GautiPastomatus() {
-        try {
-            const response = await fetch("/api/pastomatai");
+        const response = await fetch("/api/pastomatai");
+        const data = await response.json();
 
-            if (!response.ok) {
-                setZinute("Nepavyko gauti paštomatų sąrašo");
-                return;
-            }
-
-            const data = await response.json();
-            setPastomatai(data);
-        } catch {
-            setZinute("Serverio klaida. Bandykite dar kartą");
-        }
+        setPastomatai(data);
     }
 
-    const handleChange = (c: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        c.preventDefault();
-
+    function SuvestiInformacija(c: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
         const { id, value } = c.target;
 
         setUzsakymas((prev) => ({
             ...prev,
             [id]: value
         }));
-    };
+    }
 
-    function PatikrintiUzpildyma() {
-        if (uzsakymas.siuntejo_tel_nr == "" ||
-            uzsakymas.gavejo_vardas == "" ||
-            uzsakymas.gavejo_pavarde == "" ||
-            uzsakymas.gavejo_tel_nr == "" ||
-            uzsakymas.gavejo_el_pastas == "" ||
-            uzsakymas.svoris == "" ||
-            uzsakymas.pastomato_id == "") {
+    function KlaidosZinute(tekstas: string) {
+        setZinute(tekstas);
+        setSekme("");
+    }
+
+    function SekmesPranesimas(tekstas: string) {
+        setSekme(tekstas);
+        setZinute("");
+    }
+
+    function PatikrintiDuomenis() {
+        const vartotojoId = localStorage.getItem("vartotojoId");
+
+        if (!vartotojoId) {
+            KlaidosZinute("Vartotojas neprisijungęs");
+            return false;
+        }
+
+        if (
+            uzsakymas.siuntejo_tel_nr === "" ||
+            uzsakymas.gavejo_vardas === "" ||
+            uzsakymas.gavejo_pavarde === "" ||
+            uzsakymas.gavejo_tel_nr === "" ||
+            uzsakymas.gavejo_el_pastas === "" ||
+            uzsakymas.svoris === "" ||
+            uzsakymas.pastomato_id === ""
+        ) {
+            KlaidosZinute("Reikia supildyti visus laukus");
+            return false;
+        }
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(uzsakymas.gavejo_el_pastas)) {
+            KlaidosZinute("Neteisingas gavėjo el. pašto formatas");
+            return false;
+        }
+
+        if (Number(uzsakymas.svoris) <= 0) {
+            KlaidosZinute("Svoris turi būti didesnis už 0");
             return false;
         }
 
         return true;
     }
 
-    function PatikrintiPastas() {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(uzsakymas.gavejo_el_pastas);
+    function PatikrintiSignala(response: Response) {
+        return response.ok;
     }
 
-    function PatikrintiSvori() {
-        return Number(uzsakymas.svoris) > 0;
-    }
-
-    function ApskaiciuotiKaina() {
-        const svoris = Number(uzsakymas.svoris);
-
-        if (!svoris || svoris <= 0) {
-            return 0;
-        }
-
-        return Number((svoris * 0.47).toFixed(2));
-    }
-
-    function GautiPasirinktoPastomatoAdresa() {
-        const pasirinktasPastomatas = pastomatai.find(
-            (pastomatas) => pastomatas.idNr === Number(uzsakymas.pastomato_id)
-        );
-
-        if (!pasirinktasPastomatas) {
-            return "";
-        }
-
-        return pasirinktasPastomatas.adresas;
-    }
-
-    async function PriduotiDuomenis(c: React.FormEvent<HTMLFormElement>) {
+    async function PateiktiDuomenis(c: React.FormEvent<HTMLFormElement>) {
         c.preventDefault();
 
-        setZinute("");
-        setSekme("");
-
-        if (!PatikrintiUzpildyma()) {
-            setZinute("Reikia supildyti visus laukus");
-            return;
-        }
-
-        if (!PatikrintiPastas()) {
-            setZinute("Neteisingas gavėjo el. pašto formatas");
-            return;
-        }
-
-        if (!PatikrintiSvori()) {
-            setZinute("Svoris turi būti didesnis už 0");
+        if (!PatikrintiDuomenis()) {
             return;
         }
 
@@ -162,26 +129,19 @@ function UzsakymoRegistracijosLangas() {
         const data = await response.json();
 
         if (!response.ok) {
-            setZinute(data.error || "Klaida registruojant užsakymą");
+            KlaidosZinute(data.error || "Klaida registruojant užsakymą");
             return;
         }
 
-        setSukurtasUzsakymas({
-            uzsakymoId: data.uzsakymoId,
-            kaina: data.kaina
-        });
-
-        setSekme("Užsakymas išsaugotas. Dabar galite apmokėti siuntą.");
+        setSukurtasUzsakymoId(data.uzsakymoId);
+        SekmesPranesimas(`Užsakymas išsaugotas. Kaina: ${Number(data.kaina).toFixed(2)} €. Dabar galite apmokėti siuntą.`);
     }
 
     async function ApmoketiSiunta() {
-        if (!sukurtasUzsakymas) {
-            setZinute("Pirmiausia reikia išsaugoti užsakymą");
+        if (sukurtasUzsakymoId === null) {
+            KlaidosZinute("Pirmiausia reikia išsaugoti užsakymą");
             return;
         }
-
-        setZinute("");
-        setSekme("");
 
         const response = await fetch("/api/siuntos-apmokejimas", {
             method: "POST",
@@ -189,23 +149,21 @@ function UzsakymoRegistracijosLangas() {
                 "content-type": "application/json"
             },
             body: JSON.stringify({
-                uzsakymoId: sukurtasUzsakymas.uzsakymoId,
-                pastomato_id: Number(uzsakymas.pastomato_id)
+                uzsakymoId: sukurtasUzsakymoId
             })
         });
 
         const data = await response.json();
 
-        if (!response.ok) {
-            setZinute(data.error || "Apmokėjimas nepavyko. Bandykite dar kartą");
-            setSekme("Užsakymas išsaugotas, todėl galite bandyti apmokėti dar kartą.");
+        if (!PatikrintiSignala(response)) {
+            KlaidosZinute(data.error || "Apmokėjimas nepavyko");
             return;
         }
 
         navigate(`/uzsakymas/kodas/${data.uzsakymoId}`);
     }
 
-    function griztiAtgal() {
+    function GriztiAtgal() {
         navigate("/siuntos");
     }
 
@@ -216,14 +174,14 @@ function UzsakymoRegistracijosLangas() {
             {zinute && <p className={styles.klaida}>{zinute}</p>}
             {sekme && <p className={styles.sekme}>{sekme}</p>}
 
-            <form onSubmit={PriduotiDuomenis} className={styles.forma}>
+            <form onSubmit={PateiktiDuomenis} className={styles.forma}>
                 <input
                     id="siuntejo_tel_nr"
                     type="text"
                     placeholder="Siuntėjo tel. nr."
-                    onChange={handleChange}
+                    onChange={SuvestiInformacija}
                     value={uzsakymas.siuntejo_tel_nr}
-                    disabled={sukurtasUzsakymas !== null}
+                    disabled={sukurtasUzsakymoId !== null}
                 />
 
                 <div className={styles.eilute}>
@@ -231,18 +189,18 @@ function UzsakymoRegistracijosLangas() {
                         id="gavejo_vardas"
                         type="text"
                         placeholder="Gavėjo vardas"
-                        onChange={handleChange}
+                        onChange={SuvestiInformacija}
                         value={uzsakymas.gavejo_vardas}
-                        disabled={sukurtasUzsakymas !== null}
+                        disabled={sukurtasUzsakymoId !== null}
                     />
 
                     <input
                         id="gavejo_pavarde"
                         type="text"
                         placeholder="Gavėjo pavardė"
-                        onChange={handleChange}
+                        onChange={SuvestiInformacija}
                         value={uzsakymas.gavejo_pavarde}
-                        disabled={sukurtasUzsakymas !== null}
+                        disabled={sukurtasUzsakymoId !== null}
                     />
                 </div>
 
@@ -250,18 +208,18 @@ function UzsakymoRegistracijosLangas() {
                     id="gavejo_tel_nr"
                     type="text"
                     placeholder="Gavėjo tel. nr."
-                    onChange={handleChange}
+                    onChange={SuvestiInformacija}
                     value={uzsakymas.gavejo_tel_nr}
-                    disabled={sukurtasUzsakymas !== null}
+                    disabled={sukurtasUzsakymoId !== null}
                 />
 
                 <input
                     id="gavejo_el_pastas"
                     type="text"
                     placeholder="Gavėjo el. paštas"
-                    onChange={handleChange}
+                    onChange={SuvestiInformacija}
                     value={uzsakymas.gavejo_el_pastas}
-                    disabled={sukurtasUzsakymas !== null}
+                    disabled={sukurtasUzsakymoId !== null}
                 />
 
                 <input
@@ -269,17 +227,17 @@ function UzsakymoRegistracijosLangas() {
                     type="number"
                     step="0.01"
                     placeholder="Svoris kg"
-                    onChange={handleChange}
+                    onChange={SuvestiInformacija}
                     value={uzsakymas.svoris}
-                    disabled={sukurtasUzsakymas !== null}
+                    disabled={sukurtasUzsakymoId !== null}
                 />
 
                 <select
                     id="pastomato_id"
-                    onChange={handleChange}
+                    onChange={SuvestiInformacija}
                     value={uzsakymas.pastomato_id}
                     className={styles.select}
-                    disabled={sukurtasUzsakymas !== null}
+                    disabled={sukurtasUzsakymoId !== null}
                 >
                     <option value="">Pasirinkite gavėjo paštomatą</option>
                     {pastomatai.map((pastomatas) => (
@@ -289,28 +247,18 @@ function UzsakymoRegistracijosLangas() {
                     ))}
                 </select>
 
-                {GautiPasirinktoPastomatoAdresa() && (
-                    <div className={styles.adresoLaukas}>
-                        Gavėjo adresas: {GautiPasirinktoPastomatoAdresa()}
-                    </div>
-                )}
-
-                <div className={styles.kaina}>
-                    Apskaičiuota kaina: {ApskaiciuotiKaina().toFixed(2)} €
-                </div>
-
                 <div className={styles.mygtukai}>
-                    <button type="submit" disabled={sukurtasUzsakymas !== null}>
+                    <button type="submit" disabled={sukurtasUzsakymoId !== null}>
                         Išsaugoti
                     </button>
 
-                    {sukurtasUzsakymas && (
+                    {sukurtasUzsakymoId !== null && (
                         <button type="button" onClick={ApmoketiSiunta}>
                             Apmokėti siuntą
                         </button>
                     )}
 
-                    <button type="button" onClick={griztiAtgal} className={styles.atgalMygtukas}>
+                    <button type="button" onClick={GriztiAtgal} className={styles.atgalMygtukas}>
                         Atgal
                     </button>
                 </div>
