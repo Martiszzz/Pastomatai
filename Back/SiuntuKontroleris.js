@@ -148,126 +148,100 @@ module.exports = (app) => {
 
         const connection = await pool.getConnection();
 
-        try {
+    
+        const { kodas } = req.body;
 
-            const { kodas } = req.body;
+        await connection.beginTransaction();
 
-            await connection.beginTransaction();
+        const [siuntos] = await connection.query(
+            `SELECT s.siuntosNr,
+                    s.busena,
+                    s.lipdukoNr,
+                    s.kodas,
+                    s.pastomato_id,
+                    s.dureliu_id,
+                    p.uzimtas,
+                    p.talpa,
+                    p.adresas
+            FROM siunta s
+            JOIN pastomatas p
+                ON s.pastomato_id = p.idNr
+            WHERE s.kodas = ?`,
+            [kodas]
+        );
 
-            const [siuntos] = await connection.query(
-                `SELECT s.siuntosNr,
-                        s.busena,
-                        s.lipdukoNr,
-                        s.kodas,
-                        s.pastomato_id,
-                        s.dureliu_id,
-                        p.uzimtas,
-                        p.talpa,
-                        p.adresas
-                FROM siunta s
-                JOIN pastomatas p
-                    ON s.pastomato_id = p.idNr
-                WHERE s.kodas = ?`,
-                [kodas]
-            );
-
-            if (siuntos.length === 0) {
-
-                await connection.rollback();
-
-                return res.status(404).json({
-                    teigiamas: false,
-                    klaida: "Siunta nerasta pagal nurodytą kodą",
-                });
-            }
-
-            const siunta = siuntos[0];
-
-            const { uzimtas, talpa } = siunta;
-
-            const yraVietos = uzimtas < talpa;
-
-            if (!yraVietos) {
-
-                await connection.rollback();
-
-                return res.status(200).json({
-                    teigiamas: false,
-                    klaida: "Paštomatas pilnas",
-                });
-            }
-
-            console.log("SIGNALAS PAŠTOMATUI");
-
-            const [laisvosDureles] = await connection.query(
-                `SELECT dureliuId,
-                        numeris
-                FROM dureles
-                WHERE pastomato_id = ?
-                AND statusas = 0
-                LIMIT 1`,
-                [siunta.pastomato_id]
-            );
-
-            // if (laisvosDureles.length === 0) {
-
-            //     await connection.rollback();
-
-            //     return res.status(200).json({
-            //         teigiamas: false,
-            //         klaida: "Nerasta laisvų durelių",
-            //     });
-            // }
-
-            const dureles = laisvosDureles[0];
-
-            await connection.query(
-                `UPDATE siunta
-                SET dureliu_id = ?
-                WHERE siuntosNr = ?`,
-                [dureles.dureliuId, siunta.siuntosNr]
-            );
-
-            await connection.query(
-                `UPDATE dureles
-                SET statusas = 1
-                WHERE dureliuId = ?`,
-                [dureles.dureliuId]
-            );
-
-            console.log(
-                `[Siunta ${siunta.siuntosNr}] Priskirtos durelės ID=${dureles.dureliuId}`
-            );
-            if(siunta.busena==="uzregistruota") console.log("SIGNALAS PAŠTOMATUI SPAUSDINTI KODA");
-            await connection.commit();
-
-            return res.status(200).json({
-                teigiamas: true,
-                siuntosNr: siunta.siuntosNr,
-                pastomato_id: siunta.pastomato_id,
-                dureliu_id: dureles.dureliuId,
-                dureliu_numeris: dureles.numeris,
-                lipdukoNr: siunta.lipdukoNr,
-            });
-
-        } catch (error) {
+        if (siuntos.length === 0) {
 
             await connection.rollback();
 
-            console.error(
-                "[idejimasPatikrinti] klaida:",
-                error
-            );
-
-            return res.status(500).json({
+            return res.status(404).json({
                 teigiamas: false,
-                klaida: "Serverio klaida",
+                klaida: "Siunta nerasta pagal nurodytą kodą",
             });
-
-        } finally {
-
-            connection.release();
         }
+
+        const siunta = siuntos[0];
+
+        const { uzimtas, talpa } = siunta;
+
+        const yraVietos = uzimtas < talpa;
+
+        if (!yraVietos) {
+
+            await connection.rollback();
+
+            return res.status(200).json({
+                teigiamas: false,
+                klaida: "Paštomatas pilnas",
+            });
+        }
+
+        console.log("SIGNALAS PAŠTOMATUI");
+
+        const [laisvosDureles] = await connection.query(
+            `SELECT dureliuId,
+                    numeris
+            FROM dureles
+            WHERE pastomato_id = ?
+            AND statusas = 0
+            LIMIT 1`,
+            [siunta.pastomato_id]
+        );
+
+        const dureles = laisvosDureles[0];
+
+        await connection.query(
+            `UPDATE siunta
+            SET dureliu_id = ?
+            WHERE siuntosNr = ?`,
+            [dureles.dureliuId, siunta.siuntosNr]
+        );
+
+        await connection.query(
+            `UPDATE dureles
+            SET statusas = 1
+            WHERE dureliuId = ?`,
+            [dureles.dureliuId]
+        );
+
+        console.log(
+            `[Siunta ${siunta.siuntosNr}] Priskirtos durelės ID=${dureles.dureliuId}`
+        );
+        if(siunta.busena==="uzregistruota") console.log("SIGNALAS PAŠTOMATUI SPAUSDINTI KODA");
+        await connection.commit();
+
+        return res.status(200).json({
+            teigiamas: true,
+            siuntosNr: siunta.siuntosNr,
+            pastomato_id: siunta.pastomato_id,
+            dureliu_id: dureles.dureliuId,
+            dureliu_numeris: dureles.numeris,
+            lipdukoNr: siunta.lipdukoNr,
+        });
+
+    
+        connection.release();
+    
     });
 
 
@@ -276,99 +250,70 @@ module.exports = (app) => {
 
         const connection = await pool.getConnection();
 
-        try {
+        const {
+            siuntosNr,
+            patvirtinimas
+        } = req.body;
 
-            const {
-                siuntosNr,
-                patvirtinimas
-            } = req.body;
+        await connection.beginTransaction();
 
-            await connection.beginTransaction();
+        const [siuntos] = await connection.query(
+            `SELECT s.siuntosNr,
+                    s.busena,
+                    s.pastomato_id AS paskirties_pastomatas,
+                    s.dureliu_id
+            FROM siunta s
+            WHERE s.siuntosNr = ?`,
+            [siuntosNr]
+        );
 
-            const [siuntos] = await connection.query(
-                `SELECT s.siuntosNr,
-                        s.busena,
-                        s.pastomato_id AS paskirties_pastomatas,
-                        s.dureliu_id
-                FROM siunta s
-                WHERE s.siuntosNr = ?`,
+        const siunta = siuntos[0];
+
+        const [dureles] = await connection.query(
+            `SELECT d.dureliuId,
+                d.pastomato_id
+            FROM dureles d
+            WHERE d.dureliuId = ?`,
+            [siunta.dureliu_id]
+        );
+
+        const tikrasPastomatas = dureles[0].pastomato_id;
+
+        const galutinisTikslas =
+            siunta.paskirties_pastomatas === tikrasPastomatas;
+
+        if (galutinisTikslas) {
+
+            await connection.query(
+                `UPDATE siunta
+                SET busena = 'vietoje'
+                WHERE siuntosNr = ?`,
                 [siuntosNr]
             );
 
-            // if (siuntos.length === 0) {
-
-            //     await connection.rollback();
-
-            //     return res.status(404).json({
-            //         sekminga: false,
-            //         klaida: "Siunta nerasta",
-            //     });
-            // }
-
-            const siunta = siuntos[0];
-
-            const [dureles] = await connection.query(
-                `SELECT d.dureliuId,
-                    d.pastomato_id
-                FROM dureles d
-                WHERE d.dureliuId = ?`,
-                [siunta.dureliu_id]
+            console.log(
+                `[Siunta ${siuntosNr}] Statusas -> 'vietoje'`
             );
 
-            // if (dureles.length === 0) {
+        } else {
 
-            //     await connection.rollback();
-
-            //     return res.status(404).json({
-            //         sekminga: false,
-            //         klaida: "Durelės nerastos",
-            //     });
-            // }
-
-            const tikrasPastomatas = dureles[0].pastomato_id;
-
-            const galutinisTikslas =
-                siunta.paskirties_pastomatas === tikrasPastomatas;
-
-            if (galutinisTikslas) {
-
-                await connection.query(
-                    `UPDATE siunta
-                    SET busena = 'vietoje'
-                    WHERE siuntosNr = ?`,
-                    [siuntosNr]
-                );
-
-                console.log(
-                    `[Siunta ${siuntosNr}] Statusas -> 'vietoje'`
-                );
-
-            } else {
-
-                await connection.query(
-                    `UPDATE siunta
-                    SET busena = 'issiusta'
-                    WHERE siuntosNr = ?`,
-                    [siuntosNr]
-                );
-
-                console.log(
-                    `[Siunta ${siuntosNr}] Statusas -> 'issiusta'`
-                );
-            }
-
-            const [esamas] = await connection.query(
-                `SELECT patvirtinimoId
-                FROM patvirtinimas
-                WHERE siunta_id = ?`,
+            await connection.query(
+                `UPDATE siunta
+                SET busena = 'issiusta'
+                WHERE siuntosNr = ?`,
                 [siuntosNr]
             );
 
-            if (patvirtinimas === 1) {
+            console.log(
+                `[Siunta ${siuntosNr}] Statusas -> 'issiusta'`
+            );
+        }
+
+        if (patvirtinimas === 1) {
 
             await connection.query(
                 `INSERT INTO patvirtinimas
-                (patvirtintasIdejimas,                (patvirtintasIdejimas,
+                (patvirtintasIdejimas,
                 patvirtintasIsiemimas,
                 siunta_id)
                 VALUES (1, 0, ?)`,
@@ -395,26 +340,16 @@ module.exports = (app) => {
 
         else {
 
-            if (esamas.length > 0) {
-
-                await connection.query(
-                    `UPDATE patvirtinimas
-                    SET patvirtintasIdejimas = 0
-                    WHERE siunta_id = ?`,
-                    [siuntosNr]
-                );
-
-            } else {
-
-                await connection.query(
-                    `INSERT INTO patvirtinimas
-                    (patvirtintasIdejimas,
-                    patvirtintasIsiemimas,
-                    siunta_id)
-                    VALUES (0, 0, ?)`,
-                    [siuntosNr]
-                );
-            }
+           
+            await connection.query(
+                `INSERT INTO patvirtinimas
+                (patvirtintasIdejimas,
+                patvirtintasIsiemimas,
+                siunta_id)
+                VALUES (0, 0, ?)`,
+                [siuntosNr]
+            );
+        
             await connection.query(
                 `UPDATE pastomatas
                 SET uzimtas = uzimtas + 1
@@ -433,23 +368,8 @@ module.exports = (app) => {
             });
         }
 
-        } catch (error) {
-
-            await connection.rollback();
-
-            console.error(
-                "[idejimasPatvirtinti] klaida:",
-                error
-            );
-
-            return res.status(500).json({
-                sekminga: false,
-                klaida: "Serverio klaida",
-            });
-
-        } finally {
-            connection.release();
-        }
+       connection.release();
+        
     });
 
 
