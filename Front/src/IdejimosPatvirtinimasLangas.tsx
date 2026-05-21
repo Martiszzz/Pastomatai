@@ -60,7 +60,6 @@ function IdejimosPatvirtinimasLangas() {
         } 
         finally {
             navigate("/pastomatas");
-            setTimeout(() => 3000);
         }
     };
 

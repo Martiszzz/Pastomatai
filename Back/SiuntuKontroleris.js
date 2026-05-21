@@ -366,84 +366,72 @@ module.exports = (app) => {
 
             if (patvirtinimas === 1) {
 
-                if (esamas.length > 0) {
+            await connection.query(
+                `INSERT INTO patvirtinimas
+                (patvirtintasIdejimas,                (patvirtintasIdejimas,
+                patvirtintasIsiemimas,
+                siunta_id)
+                VALUES (1, 0, ?)`,
+                [siuntosNr]
+            );
 
-                    await connection.query(
-                        `UPDATE patvirtinimas
-                        SET patvirtintasIdejimas = 1
-                        WHERE siunta_id = ?`,
-                        [siuntosNr]
-                    );
+            await connection.query(
+                `UPDATE pastomatas
+                SET uzimtas = uzimtas + 1
+                WHERE idNr = ?`,
+                [tikrasPastomatas]
+            );
 
-                } else {
+            console.log(
+                `[Paštomatas ${tikrasPastomatas}] Užimtumas padidintas`
+            );
 
-                    await connection.query(
-                        `INSERT INTO patvirtinimas
-                        (patvirtintasIdejimas,
-                        patvirtintasIsiemimas,
-                        siunta_id)
-                        VALUES (1, 0, ?)`,
-                        [siuntosNr]
-                    );
-                }
+            await connection.commit();
+
+            return res.status(200).json({
+                sekminga: true,
+            });
+        }
+
+        else {
+
+            if (esamas.length > 0) {
 
                 await connection.query(
-                    `UPDATE pastomatas
-                    SET uzimtas = uzimtas + 1
-                    WHERE idNr = ?`,
-                    [tikrasPastomatas]
+                    `UPDATE patvirtinimas
+                    SET patvirtintasIdejimas = 0
+                    WHERE siunta_id = ?`,
+                    [siuntosNr]
                 );
 
-                console.log(
-                    `[Paštomatas ${tikrasPastomatas}] Užimtumas padidintas`
-                );
+            } else {
 
-                await connection.commit();
-
-                return res.status(200).json({
-                    sekminga: true,
-                });
-            }
-
-            else {
-
-                if (esamas.length > 0) {
-
-                    await connection.query(
-                        `UPDATE patvirtinimas
-                        SET patvirtintasIdejimas = 0
-                        WHERE siunta_id = ?`,
-                        [siuntosNr]
-                    );
-
-                } else {
-
-                    await connection.query(
-                        `INSERT INTO patvirtinimas
-                        (patvirtintasIdejimas,
-                        patvirtintasIsiemimas,
-                        siunta_id)
-                        VALUES (0, 0, ?)`,
-                        [siuntosNr]
-                    );
-                }
                 await connection.query(
-                    `UPDATE pastomatas
-                    SET uzimtas = uzimtas + 1
-                    WHERE idNr = ?`,
-                    [tikrasPastomatas]
+                    `INSERT INTO patvirtinimas
+                    (patvirtintasIdejimas,
+                    patvirtintasIsiemimas,
+                    siunta_id)
+                    VALUES (0, 0, ?)`,
+                    [siuntosNr]
                 );
-
-                console.log(
-                    `[Siunta ${siuntosNr}] Įdėjimas atmestas`
-                );
-
-                await connection.commit();
-
-                return res.status(200).json({
-                    sekminga: false,
-                });
             }
+            await connection.query(
+                `UPDATE pastomatas
+                SET uzimtas = uzimtas + 1
+                WHERE idNr = ?`,
+                [tikrasPastomatas]
+            );
+
+            console.log(
+                `[Siunta ${siuntosNr}] Įdėjimas atmestas`
+            );
+
+            await connection.commit();
+
+            return res.status(200).json({
+                sekminga: false,
+            });
+        }
 
         } catch (error) {
 
