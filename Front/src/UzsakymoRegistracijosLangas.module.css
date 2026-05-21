@@ -24,14 +24,6 @@
     font-size: 15px;
 }
 
-.kaina {
-    background-color: #f5f5f5;
-    padding: 12px;
-    border-radius: 8px;
-    text-align: center;
-    font-weight: bold;
-}
-
 .klaida {
     background-color: #f8d7da;
     color: #721c24;
@@ -40,9 +32,17 @@
     margin-bottom: 15px;
 }
 
+.sekme {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
 .mygtukai {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
 }
 
