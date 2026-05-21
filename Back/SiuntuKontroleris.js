@@ -318,26 +318,14 @@ module.exports = (app) => {
 
         if (patvirtinimas === 1) {
 
-            if (esamas.length > 0) {
-
-                await connection.query(
-                    `UPDATE patvirtinimas
-                    SET patvirtintasIdejimas = 1
-                    WHERE siunta_id = ?`,
-                    [siuntosNr]
-                );
-
-            } else {
-
-                await connection.query(
-                    `INSERT INTO patvirtinimas
-                    (patvirtintasIdejimas,
-                    patvirtintasIsiemimas,
-                    siunta_id)
-                    VALUES (1, 0, ?)`,
-                    [siuntosNr]
-                );
-            }
+            await connection.query(
+                `INSERT INTO patvirtinimas
+                (patvirtintasIdejimas,
+                patvirtintasIsiemimas,
+                siunta_id)
+                VALUES (1, 0, ?)`,
+                [siuntosNr]
+            );
 
             await connection.query(
                 `UPDATE pastomatas
@@ -359,26 +347,15 @@ module.exports = (app) => {
 
         else {
 
-            if (esamas.length > 0) {
-
-                await connection.query(
-                    `UPDATE patvirtinimas
-                    SET patvirtintasIdejimas = 0
-                    WHERE siunta_id = ?`,
-                    [siuntosNr]
-                );
-
-            } else {
-
-                await connection.query(
-                    `INSERT INTO patvirtinimas
-                    (patvirtintasIdejimas,
-                    patvirtintasIsiemimas,
-                    siunta_id)
-                    VALUES (0, 0, ?)`,
-                    [siuntosNr]
-                );
-            }
+           
+            await connection.query(
+                `INSERT INTO patvirtinimas
+                (patvirtintasIdejimas,
+                patvirtintasIsiemimas,
+                siunta_id)
+                VALUES (0, 0, ?)`,
+                [siuntosNr]
+            );
             await connection.query(
                 `UPDATE pastomatas
                 SET uzimtas = uzimtas + 1
